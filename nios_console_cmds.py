@@ -160,7 +160,7 @@ def run_show_command(member, user='admin', pwd='infoblox', cmd=''):
     prompt = '>'
 
     if cmd:
-        logging.debug('Executing ssh command: {ssh_command}')
+        logging.debug(f'Executing ssh command: {ssh_command}')
         ssh = pexpect.spawn(ssh_command)
 
         response = ssh.expect([ ssh_newkey, "password:", pexpect.EOF, pexpect.TIMEOUT ])
