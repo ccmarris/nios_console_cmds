@@ -43,7 +43,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 
 '''
-__version__ = '0.1.0'
+__version__ = '0.1.1'
 __author__ = 'Chris Marrison'
 __author_email__ = 'chris@infoblox.com'
 
@@ -150,7 +150,7 @@ def read_ini(ini_filename):
     return config
 
 
-def run_show_command(member, user='admin', pwd='infoblox', cmd=''):
+def run_console_command(member, user='admin', pwd='infoblox', cmd=''):
     '''
     Generic run command to capture output
     '''
@@ -269,6 +269,7 @@ def main():
     Core logic
     '''
     exitcode = 0
+    commands = [ 'shutdown', 'reboot' ]
 
     # Parse CLI arguments
     args = parseargs()
@@ -297,7 +298,14 @@ def main():
             exitcode = 1
     
     elif 'show' in args.command:
-        output = run_show_command(args.member,
+        output = run_console_command(args.member,
+                                  user=config.get('user'),
+                                  pwd=config.get('pass'),
+                                  cmd=args.command)
+        print(output)
+
+    elif args.command in commands:
+        output = run_console_command(args.member,
                                   user=config.get('user'),
                                   pwd=config.get('pass'),
                                   cmd=args.command)
