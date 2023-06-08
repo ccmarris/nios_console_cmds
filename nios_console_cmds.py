@@ -8,7 +8,7 @@
     Can also be run as interactive CLI script
 
  Requirements:
-   Python 3.6+ with pexpect
+   Python 3.7+ with pexpect
 
  Author: Chris Marrison
 
@@ -43,7 +43,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 
 '''
-__version__ = '0.1.1'
+__version__ = '0.1.3'
 __author__ = 'Chris Marrison'
 __author_email__ = 'chris@infoblox.com'
 
@@ -73,6 +73,8 @@ def parseargs():
                         help="Name or IP of Grid Member")
     parse.add_argument('-C', '--command', type=str, required=True,
                         help="show command or promote_master")
+    parse.add_argument('-y', '--yes', action='store_true', 
+                        help="Enable debug messages")
     parse.add_argument('-p', '--promote', action='store_true', 
                         help="Promote GMC to GM")
     parse.add_argument('-D', '--delay', type=int, default=0,
@@ -150,7 +152,7 @@ def read_ini(ini_filename):
     return config
 
 
-def run_console_command(member, user='admin', pwd='infoblox', cmd=''):
+def run_show_command(member, user='admin', pwd='infoblox', cmd=''):
     '''
     Generic run command to capture output
     '''
@@ -188,6 +190,55 @@ def run_console_command(member, user='admin', pwd='infoblox', cmd=''):
     return output
 
 
+def run_console_command(member, user='admin', pwd='infoblox', cmd='', confirm=False):
+    '''
+    Generic run command to capture output
+    '''
+    ssh_command = f"ssh {user}@{member}"
+    ssh_newkey = 'Are you sure you want to continue connecting (yes/no/[fingerprint])?'
+    login_failed = 'Permission denied, please try again.'
+    prompt = '>'
+
+    if cmd:
+        logging.debug(f'Executing ssh command: {ssh_command}')
+        ssh = pexpect.spawn(ssh_command)
+
+        response = ssh.expect([ ssh_newkey, "password:", pexpect.EOF, pexpect.TIMEOUT ])
+        if response == 0:
+            logging.debug('New ssh key being accepted.')
+            ssh.sendline('yes')
+            response = ssh.expect([ ssh_newkey, "password:", pexpect.EOF, pexpect.TIMEOUT ])
+        elif response == 1:
+            ssh.sendline(pwd)
+        else:
+            raise Exception(f'ssh connection issue: {ssh.before}')
+
+        response = ssh.expect([ login_failed, prompt ])
+        if response == 0:
+            logging.error(f'Login failed')
+        elif response == 1:
+            logging.debug(f'Login successful, executing command: {cmd}')
+            ssh.sendline(cmd)
+            response = ssh.expect([ prompt, '(y or n):' ])
+            if response == 0:
+                output = ssh.before.decode()
+            elif response == 1:
+                if confirm:
+                    logging.info('Confirming action')
+                    ssh.sendline('y')
+                else:
+                    logging.info('Aborting action')
+                    ssh.sendline('n')
+                ssh.expect(prompt)
+                output = ssh.before.decode()
+                
+            ssh.close()
+    else:
+         output = 'No command specified, run aborted.'
+
+    return output
+
+
 def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
     '''
     Remotely execute set promote_master
@@ -205,7 +256,8 @@ def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
     ssh_command = f"ssh {user}@{gmc}"
     ssh_newkey = 'Are you sure you want to continue connecting (yes/no/[fingerprint])?'
     login_failed = 'Permission denied, please try again.'
-    member_delay = 'Do you want a delay between notification to grid members? (y or n):'
+    # member_delay = 'Do you want a delay between notification to grid members? (y or n):'
+    member_delay = 'grid members? (y or n):'
     prompt = '>'
 
     # Spawn ssh
@@ -229,8 +281,9 @@ def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
 
         response = ssh.expect([ member_delay, prompt, pexpect.EOF, pexpect.TIMEOUT ])
         if response == 0:
+            logging.debug('Request for member notification delay received')
             if delay == 0:
-                logging.debug('No delay set')
+                logging.debug('No notification delay set')
                 ssh.sendline('n')
             else:
                 logging.debug(f'Setting member delay to {delay}')
@@ -238,14 +291,15 @@ def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
                 ssh.expect('Set delay time for notification to grid member? [Default: 30s]')
                 ssh.sendline(str(delay))
             
-            logging.debug('Confirming promotion')
             ssh.expect('Are you sure you want to do this? (y or n):')
+            logging.debug('Confirming promotion')
             ssh.sendline('y')
             ssh.expect('(y or n):')
             ssh.sendline('y')
             output = ssh.before.decode()
             logging.debug(output)
             status = True
+
         elif response == 1:
             status = False
             logging.error('Promotion failed')
@@ -298,7 +352,7 @@ def main():
             exitcode = 1
     
     elif 'show' in args.command:
-        output = run_console_command(args.member,
+        output = run_show_command(args.member,
                                   user=config.get('user'),
                                   pwd=config.get('pass'),
                                   cmd=args.command)
@@ -308,7 +362,8 @@ def main():
         output = run_console_command(args.member,
                                   user=config.get('user'),
                                   pwd=config.get('pass'),
-                                  cmd=args.command)
+                                  cmd=args.command,
+                                  confirm=args.yes)
         print(output)
 
     else:
