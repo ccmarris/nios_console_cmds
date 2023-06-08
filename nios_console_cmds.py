@@ -43,7 +43,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 
 '''
-__version__ = '0.1.4'
+__version__ = '0.1.5'
 __author__ = 'Chris Marrison'
 __author_email__ = 'chris@infoblox.com'
 
@@ -239,7 +239,7 @@ def run_console_command(member, user='admin', pwd='infoblox', cmd='', confirm=Fa
     return output
 
 
-def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
+def set_promote_master(gmc, user='admin', pwd='infoblox', delay=0):
     '''
     Remotely execute set promote_master
 
@@ -293,7 +293,7 @@ def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
             ssh.expect_exact('Are you sure you want to do this? (y or n):')
             logging.debug('Confirming promotion')
             ssh.sendline('y')
-            ssh.expect_exact(' (y or n):')
+            ssh.expect_exact('Are you sure you really want to do this?')
             ssh.sendline('y')
             output = ssh.before.decode()
             logging.debug(output)
@@ -335,7 +335,7 @@ def main():
 
     if args.command == 'promote_master':
         if args.promote:
-            success = set_prommote_master(args.member,
+            success = set_promote_master(args.member,
                                         user=config.get('user'),
                                         pwd=config.get('pass'),
                                         delay=args.delay)
