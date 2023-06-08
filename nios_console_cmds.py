@@ -43,7 +43,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 
 '''
-__version__ = '0.1.5'
+__version__ = '0.1.7'
 __author__ = 'Chris Marrison'
 __author_email__ = 'chris@infoblox.com'
 
@@ -293,7 +293,8 @@ def set_promote_master(gmc, user='admin', pwd='infoblox', delay=0):
             ssh.expect_exact('Are you sure you want to do this? (y or n):')
             logging.debug('Confirming promotion')
             ssh.sendline('y')
-            ssh.expect_exact('Are you sure you really want to do this?')
+            logging.debug('Re confirming promotion')
+            ssh.expect_exact('want to do this? (y or n):')
             ssh.sendline('y')
             output = ssh.before.decode()
             logging.debug(output)
