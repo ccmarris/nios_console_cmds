@@ -12,7 +12,7 @@
 
  Author: Chris Marrison
 
- Date Last Updated: 20230606
+ Date Last Updated: 20230608
 
  Todo:
 
@@ -43,7 +43,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 
 '''
-__version__ = '0.1.3'
+__version__ = '0.1.4'
 __author__ = 'Chris Marrison'
 __author_email__ = 'chris@infoblox.com'
 
@@ -256,8 +256,7 @@ def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
     ssh_command = f"ssh {user}@{gmc}"
     ssh_newkey = 'Are you sure you want to continue connecting (yes/no/[fingerprint])?'
     login_failed = 'Permission denied, please try again.'
-    # member_delay = 'Do you want a delay between notification to grid members? (y or n):'
-    member_delay = 'grid members? (y or n):'
+    member_delay = 'Do you want a delay between notification to grid members? (y or n):'
     prompt = '>'
 
     # Spawn ssh
@@ -279,7 +278,7 @@ def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
         logging.debug('Login successful, sending set promote_master')
         ssh.sendline('set promote_master')
 
-        response = ssh.expect([ member_delay, prompt, pexpect.EOF, pexpect.TIMEOUT ])
+        response = ssh.expect_exact([ member_delay, prompt, pexpect.EOF, pexpect.TIMEOUT ])
         if response == 0:
             logging.debug('Request for member notification delay received')
             if delay == 0:
@@ -288,13 +287,13 @@ def set_prommote_master(gmc, user='admin', pwd='infoblox', delay=0):
             else:
                 logging.debug(f'Setting member delay to {delay}')
                 ssh.sendline('y')
-                ssh.expect('Set delay time for notification to grid member? [Default: 30s]')
+                ssh.expect_exact('Set delay time for notification to grid member? [Default: 30s]')
                 ssh.sendline(str(delay))
             
-            ssh.expect('Are you sure you want to do this? (y or n):')
+            ssh.expect_exact('Are you sure you want to do this? (y or n):')
             logging.debug('Confirming promotion')
             ssh.sendline('y')
-            ssh.expect('(y or n):')
+            ssh.expect_exact(' (y or n):')
             ssh.sendline('y')
             output = ssh.before.decode()
             logging.debug(output)

@@ -2,7 +2,7 @@
 NIOS Remmote Console Commands
 =============================
 
-| Version: 0.1.2
+| Version: 0.1.4
 | Author: Chris Marrison
 | Email: chris@infoblox.com
 
