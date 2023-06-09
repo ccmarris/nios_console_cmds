@@ -2,7 +2,7 @@
 NIOS Remmote Console Commands
 =============================
 
-| Version: 0.2.1
+| Version: 0.2.2
 | Author: Chris Marrison
 | Email: chris@infoblox.com
 
@@ -206,4 +206,5 @@ This project is licensed under the 2-Clause BSD License
 Aknowledgements
 ---------------
 
-Thanks to Alex Del Rio for bringing the use case and testing.
+Thanks to Alex Del Rio for bringing the use case and to both Alex
+and Steve Makousky for testing in their labs.

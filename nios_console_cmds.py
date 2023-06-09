@@ -4,8 +4,8 @@
 
  Description:
 
-    Library of utils to run commands on NIOS console via SSH
-    Can also be run as interactive CLI script
+    Small Library of functions to run console commands on NIOS via SSH
+    Can also be run as an interactive CLI script.
 
  Requirements:
    Python 3.7+ with pexpect
