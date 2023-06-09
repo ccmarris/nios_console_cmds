@@ -43,7 +43,7 @@
  POSSIBILITY OF SUCH DAMAGE.
 
 '''
-__version__ = '0.2.0'
+__version__ = '0.2.2'
 __author__ = 'Chris Marrison'
 __author_email__ = 'chris@infoblox.com'
 
@@ -198,6 +198,7 @@ def run_console_command(member, user='admin', pwd='infoblox', cmd='', confirm=Fa
     ssh_newkey = 'Are you sure you want to continue connecting (yes/no/[fingerprint])?'
     login_failed = 'Permission denied, please try again.'
     prompt = '>'
+    y_or_n ='.*y or n.*'
 
     if cmd:
         logging.debug(f'Executing ssh command: {ssh_command}')
@@ -219,7 +220,7 @@ def run_console_command(member, user='admin', pwd='infoblox', cmd='', confirm=Fa
         elif response == 1:
             logging.debug(f'Login successful, executing command: {cmd}')
             ssh.sendline(cmd)
-            response = ssh.expect([ prompt, '(y or n):' ])
+            response = ssh.expect([ prompt, y_or_n ])
             if response == 0:
                 output = ssh.before.decode()
             elif response == 1:
@@ -258,6 +259,7 @@ def set_promote_master(gmc, user='admin', pwd='infoblox', delay=0):
     login_failed = 'Permission denied, please try again.'
     member_delay = 'Do you want a delay between notification to grid members? (y or n):'
     prompt = '>'
+    y_or_n ='.*y or n.*'
 
     # Spawn ssh
     ssh = pexpect.spawn(ssh_command)
@@ -278,7 +280,8 @@ def set_promote_master(gmc, user='admin', pwd='infoblox', delay=0):
         logging.debug('Login successful, sending set promote_master')
         ssh.sendline('set promote_master')
 
-        response = ssh.expect_exact([ member_delay, prompt, pexpect.EOF, pexpect.TIMEOUT ])
+        # response = ssh.expect_exact([ member_delay, prompt, pexpect.EOF, pexpect.TIMEOUT ])
+        response = ssh.expect([ y_or_n, prompt, pexpect.EOF, pexpect.TIMEOUT ])
         if response == 0:
             logging.debug('Request for member notification delay received')
             if delay == 0:
@@ -290,11 +293,11 @@ def set_promote_master(gmc, user='admin', pwd='infoblox', delay=0):
                 ssh.expect_exact('Set delay time for notification to grid member? [Default: 30s]')
                 ssh.sendline(str(delay))
             
-            ssh.expect_exact('Are you sure you want to do this? (y or n):')
+            ssh.expect(y_or_n)
             logging.debug('Confirming promotion')
             ssh.sendline('y')
             logging.debug('Re confirming promotion')
-            ssh.expect('.*y or n.*')
+            ssh.expect(y_or_n)
             ssh.sendline('y')
             ssh.expect(pexpect.EOF)
             output = ssh.before.decode()
@@ -335,7 +338,7 @@ def main():
     # Read inifile
     config = read_ini(inifile)
 
-    if args.command == 'promote_master':
+    if 'promote_master' in args.command:
         if args.promote:
             success = set_promote_master(args.member,
                                         user=config.get('user'),
