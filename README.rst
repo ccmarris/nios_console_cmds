@@ -1,5 +1,5 @@
 =============================
-NIOS Remmote Console Commands
+NIOS Remote Console Commands
 =============================
 
 | Version: 0.2.2
